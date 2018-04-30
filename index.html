@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>U.F.O. SA Webapp</title>
+</head>
+<body>
+  <script>
+    let bluetoothDevice;
+    let characteristic;
+
+    const VORZE_SERVICE_UUID = '40ee1111-63ec-4b7f-8ce7-712efd55b90e';
+    const CONTROL_CHAR_UUID = '40ee2222-63ec-4b7f-8ce7-712efd55b90e';
+
+    function connectUfoSa(){
+
+      console.log("start connect");
+      const options = {
+        filters: [
+          {name: "UFOSA"},
+          {services:[VORZE_SERVICE_UUID]}
+        ]
+      };
+
+      navigator.bluetooth.requestDevice(options)
+      .then(device => {
+        bluetoothDevice = device;
+        console.log("デバイスを取得しました", device);
+        return device.gatt.connect();
+      })
+      .then(server =>{
+        console.log("GATTサーバーに接続しました", server);
+        return server.getPrimaryService(VORZE_SERVICE_UUID);
+      })
+      .then(service => {
+        console.log("サービスを取得しました", service);
+        return service.getCharacteristic(CONTROL_CHAR_UUID);
+      })
+      .then(chara => {
+        characteristic = chara;
+        console.log("キャラクタリスティックを取得しました", chara);
+        // chara.writeValue(value);  //値を書き込む
+      })
+      .catch(error => {
+        console.log(error);
+      });
+    }
+
+    function disconnect() {
+      if (!bluetoothDevice || !bluetoothDevice.gatt.connected) return;
+      bluetoothDevice.gatt.disconnect();
+    }
+  </script>
+  <button onclick="connectUfoSa()">connect</button>
+  <button onclick="disconnect()">disconnect</button>
+</body>
+</html>
